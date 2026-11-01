@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VinFast EV Split-Screen Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --card-bg: #121722;
+      --border-color: #1f293d;
+      --accent-blue: #0080ff;
+      --accent-green: #00d26a;
+      --accent-red: #ff4757;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+    }
+    #app-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+    /* TOP NAVBAR */
+    header {
+      height: 52px;
+      background: rgba(18, 23, 34, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 1000;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #38bdf8;
+    }
+    .brand svg {
+      width: 24px;
+      height: 24px;
+      fill: #38bdf8;
+    }
+    .hud-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+    }
+    .speed-badge {
+      background: #0f172a;
+      border: 1px solid #0284c7;
+      border-radius: 20px;
+      padding: 4px 14px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      color: #38bdf8;
+    }
+    .speed-val {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: monospace;
+    }
+    .speed-unit {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .clock-badge {
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+      background: #1e293b;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .split-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-ctrl {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-ctrl:hover, .btn-ctrl.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #fff;
+    }
+
+    /* MAIN SPLIT VIEW */
+    #main-split {
+      flex: 1;
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 52px);
+      overflow: hidden;
+      position: relative;
+    }
+    .panel {
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.25s ease-out;
+    }
+    #panel-map {
+      width: 50%;
+      border-right: 2px solid var(--border-color);
+      background: #111;
+    }
+    #panel-video {
+      width: 50%;
+      background: #000;
+    }
+
+    /* MAP PANEL TOOLS */
+    .map-header {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 500;
+      display: flex;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .map-header > * {
+      pointer-events: auto;
+    }
+    .map-mode-toggle {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      padding: 3px;
+      backdrop-filter: blur(8px);
+    }
+    .btn-mode {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-mode.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+    .btn-locate {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+    }
+    #leaflet-map {
+      width: 100%;
+      height: 100%;
+    }
+    #waze-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    /* VIDEO PANEL TOOLS */
+    .video-header {
+      padding: 8px 12px;
+      background: rgba(18, 23, 34, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+    .search-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--accent-blue);
+    }
+    .btn-play {
+      background: var(--accent-red);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .preset-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .preset-pills::-webkit-scrollbar {
+      display: none;
+    }
+    .pill {
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      color: #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .pill:hover {
+      background: #334155;
+      color: white;
+    }
+    .video-frame-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #yt-player {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .no-fullscreen-notice {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #10b981;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- TOP HEADER -->
+    <header>
+      <div class="brand">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+        <span>VF SPLIT DASH</span>
+      </div>
+
+      <div class="hud-stats">
+        <div class="speed-badge">
+          <span class="speed-val" id="hud-speed">0</span>
+          <span class="speed-unit">KM/H</span>
+        </div>
+        <div class="clock-badge" id="hud-clock">00:00:00</div>
+      </div>
+
+      <div class="split-controls">
+        <button class="btn-ctrl active" onclick="setRatio('50-50')">50:50</button>
+        <button class="btn-ctrl" onclick="setRatio('65-35')">65:35</button>
+        <button class="btn-ctrl" onclick="setRatio('35-65')">35:65</button>
+        <button class="btn-ctrl" onclick="setRatio('map-only')">Map</button>
+        <button class="btn-ctrl" onclick="setRatio('video-only')">Video</button>
+      </div>
+    </header>
+
+    <!-- CONTENT PANELS -->
+    <div id="main-split">
+      <!-- MAP PANEL -->
+      <div class="panel" id="panel-map">
+        <div class="map-header">
+          <div class="map-mode-toggle">
+            <button class="btn-mode active" id="btn-mode-gps" onclick="switchMapMode('leaflet')">GPS Trực Tiếp</button>
+            <button class="btn-mode" id="btn-mode-waze" onclick="switchMapMode('waze')">Waze Báo Kẹt/Cam</button>
+          </div>
+          <button class="btn-locate" onclick="centerVehicle()">📍 Định Vị Lại</button>
+        </div>
+        <div id="leaflet-map"></div>
+        <iframe id="waze-frame" src="about:blank" allow="geolocation"></iframe>
+      </div>
+
+      <!-- VIDEO PANEL -->
+      <div class="panel" id="panel-video">
+        <div class="video-header">
+          <div class="search-row">
+            <input type="text" id="video-input" class="search-input" placeholder="Dán link YouTube hoặc gõ từ khóa tìm kiếm..." onkeydown="if(event.key==='Enter') playVideoInput()">
+            <button class="btn-play" onclick="playVideoInput()">▶ Phát</button>
+          </div>
+          <div class="preset-pills">
+            <span class="pill" onclick="loadPreset('dQw4w9WgXcQ')">🎵 Nhạc Nổi Bật</span>
+            <span class="pill" onclick="loadQuery('nhac tre remix bass cuc cang')">⚡ Remix Sôi Động</span>
+            <span class="pill" onclick="loadQuery('tuyen tap bolero hai ngoai hay nhat')">🎸 Bolero Chọn Lọc</span>
+            <span class="pill" onclick="loadQuery('vtv24 truc tiep')">🔴 Tin Tức VTV24</span>
+            <span class="pill" onclick="loadQuery('lofi chill lai xe dem')">☕ Lofi Lái Xe</span>
+            <span class="pill" onclick="loadQuery('podcast tri thuc moi ngay')">🎙️ Sách Nói / Podcast</span>
+          </div>
+        </div>
+
+        <div class="video-frame-container">
+          <iframe id="yt-player" 
+                  src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1&playsinline=1&enablejsapi=1" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen="false">
+          </iframe>
+          <div class="no-fullscreen-notice">🛡️ Chống khóa hình khi xe lăn bánh</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // 1. CLOCK
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('hud-clock').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 2. RATIO CONTROLS
+    function setRatio(ratio) {
+      document.querySelectorAll('.btn-ctrl').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const mapP = document.getElementById('panel-map');
+      const vidP = document.getElementById('panel-video');
+
+      if (ratio === '50-50') {
+        mapP.style.width = '50%';
+        vidP.style.width = '50%';
+      } else if (ratio === '65-35') {
+        mapP.style.width = '65%';
+        vidP.style.width = '35%';
+      } else if (ratio === '35-65') {
+        mapP.style.width = '35%';
+        vidP.style.width = '65%';
+      } else if (ratio === 'map-only') {
+        mapP.style.width = '100%';
+        vidP.style.width = '0%';
+      } else if (ratio === 'video-only') {
+        mapP.style.width = '0%';
+        vidP.style.width = '100%';
+      }
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 300);
+    }
+
+    // 3. LEAFLET GPS MAP
+    let map, marker, circle;
+    let currentLat = 21.0285, currentLng = 105.8542; // Mặc định Hà Nội
+
+    function initMap() {
+      map = L.map('leaflet-map', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([currentLat, currentLng], 15);
+
+      // CartoDB Dark Matter tiles (đẹp cho xe ban đêm)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      // Car Icon
+      const carIcon = L.divIcon({
+        className: 'custom-car-pin',
+        html: '<div style="background:#0284c7; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px #0284c7;"></div>',
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+
+      marker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(map);
+
+      // Theo dõi GPS xe thời gian thực
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          pos => {
+            currentLat = pos.coords.latitude;
+            currentLng = pos.coords.longitude;
+            const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+            document.getElementById('hud-speed').textContent = speedKmh;
+
+            marker.setLatLng([currentLat, currentLng]);
+          },
+          err => console.log('GPS Pending / denied', err),
+          { enableHighAccuracy: true, maximumAge: 1000 }
+        );
+      }
+    }
+    initMap();
+
+    function centerVehicle() {
+      if (map) {
+        map.setView([currentLat, currentLng], 16, { animate: true });
+      }
+    }
+
+    // 4. MAP MODE SWITCH (GPS vs WAZE)
+    function switchMapMode(mode) {
+      const btnGps = document.getElementById('btn-mode-gps');
+      const btnWaze = document.getElementById('btn-mode-waze');
+      const lMap = document.getElementById('leaflet-map');
+      const wFrame = document.getElementById('waze-frame');
+
+      if (mode === 'leaflet') {
+        btnGps.classList.add('active');
+        btnWaze.classList.remove('active');
+        lMap.style.display = 'block';
+        wFrame.style.display = 'none';
+        map.invalidateSize();
+      } else {
+        btnWaze.classList.add('active');
+        btnGps.classList.remove('active');
+        lMap.style.display = 'none';
+        wFrame.style.display = 'block';
+        if (wFrame.src === 'about:blank') {
+          wFrame.src = `https://embed.waze.com/iframe?zoom=15&lat=${currentLat}&lon=${currentLng}&ct=livemap`;
+        }
+      }
+    }
+
+    // 5. YOUTUBE CONTROLS
+    function extractVideoId(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function playVideoInput() {
+      const input = document.getElementById('video-input').value.trim();
+      if (!input) return;
+
+      const vidId = extractVideoId(input);
+      if (vidId) {
+        loadPreset(vidId);
+      } else {
+        loadQuery(input);
+      }
+    }
+
+    function loadPreset(id) {
+      const player = document.getElementById('yt-player');
+      player.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&enablejsapi=1`;
+    }
+
+    function loadQuery(query) {
+      const player = document.getElementById('yt-player');
+      // Nhúng danh sách tìm kiếm YouTube
+      player.src = `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&playsinline=1&enablejsapi=1`;
+    }
+  </script>
+</body>
+</html>
