@@ -3,120 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VinFast EV Split-Screen Dashboard</title>
-  <link rel="stylesheet" href="./leaflet.css" />
+  <title>🐴 VinFast EV Split-Screen Dashboard</title>
+  
+  <!-- Leaflet Core CSS -->
+  <link rel="stylesheet" href="leaflet.css" />
+  
   <style>
     :root {
-      --bg-dark: #0a0d14;
-      --card-bg: #121722;
-      --border-color: #1e293b;
-      --accent-blue: #0284c7;
-      --accent-cyan: #06b6d4;
+      --bg-dark: #0b0f19;
+      --panel-bg: #111827;
+      --card-bg: #1f2937;
+      --accent-blue: #2563eb;
+      --accent-blue-hover: #1d4ed8;
       --accent-green: #10b981;
+      --accent-orange: #f59e0b;
       --accent-red: #ef4444;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-color: #374151;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-    body, html {
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
-      background-color: var(--bg-dark);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--text-main);
+      user-select: none;
     }
+
     #app-container {
       display: flex;
       flex-direction: column;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
     }
 
-    /* TOP HUD NAVBAR */
+    /* TOP HEADER HUD */
     header {
       height: 54px;
-      background: rgba(15, 23, 42, 0.98);
-      border-bottom: 1px solid var(--border-color);
+      background: #0f172a;
+      border-bottom: 2px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 14px;
+      padding: 0 16px;
       z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     }
+
     .brand-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .brand {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 15px;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       color: #38bdf8;
+      font-size: 15px;
     }
     .brand svg {
       width: 22px;
       height: 22px;
       fill: #38bdf8;
     }
+
     .hud-stats {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+
     .speed-badge {
-      background: #091322;
-      border: 1px solid #0284c7;
-      border-radius: 20px;
-      padding: 3px 12px;
       display: flex;
       align-items: baseline;
       gap: 4px;
-      color: #38bdf8;
+      background: var(--card-bg);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
     }
     .speed-val {
       font-size: 20px;
       font-weight: 800;
-      font-family: monospace;
+      color: #10b981;
+      font-variant-numeric: tabular-nums;
     }
     .speed-unit {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text-muted);
-      font-weight: 700;
+      font-weight: bold;
     }
+
+    /* GPS BADGE */
+    .gps-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-bg);
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gps-badge:hover {
+      background: rgba(37, 99, 235, 0.2);
+      border-color: var(--accent-blue);
+    }
+    .gps-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+      box-shadow: 0 0 6px var(--accent-orange);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .gps-dot.active {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+    .gps-dot.error {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+    .gps-text {
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
     .clock-badge {
-      font-family: monospace;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      color: #e2e8f0;
-      background: #1e293b;
-      padding: 4px 10px;
+      color: #cbd5e1;
+      font-variant-numeric: tabular-nums;
+      padding: 4px 8px;
       border-radius: 6px;
-      border: 1px solid #334155;
+      background: rgba(255,255,255,0.05);
     }
+
     .split-controls {
       display: flex;
       align-items: center;
       gap: 4px;
+      background: var(--card-bg);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
     }
     .btn-ctrl {
-      background: #1e293b;
-      border: 1px solid var(--border-color);
+      background: transparent;
+      border: 1px solid transparent;
       color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -210,10 +266,101 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
+    .btn-map-action:hover {
+      background: rgba(30, 41, 59, 0.98);
+      border-color: #64748b;
+    }
     .btn-map-action.active {
       background: #059669;
       border-color: #10b981;
     }
+
+    /* GPS ALERT BAR */
+    .gps-alert-bar {
+      position: absolute;
+      top: 54px;
+      left: 10px;
+      right: 10px;
+      z-index: 550;
+      background: rgba(30, 27, 75, 0.96);
+      border: 1px solid #818cf8;
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .gps-alert-icon { font-size: 22px; flex-shrink: 0; }
+    .gps-alert-content { flex: 1; }
+    .gps-alert-title { font-weight: 700; font-size: 13px; color: #f87171; margin-bottom: 2px; }
+    .gps-alert-desc { font-size: 11px; color: #cbd5e1; line-height: 1.4; }
+    .gps-alert-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .btn-gps-alert-action {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-gps-alert-action:hover { background: #1d4ed8; }
+    .btn-gps-alert-dismiss {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    /* MAP SEARCH FLOAT */
+    .map-search-float {
+      position: absolute;
+      bottom: 20px;
+      left: 15px;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 4px 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      width: 250px;
+      max-width: 60%;
+    }
+    .map-search-float input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 12px;
+      width: 100%;
+    }
+    .btn-map-search-go {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
     #leaflet-map {
       width: 100%;
       height: 100%;
@@ -255,7 +402,8 @@
     }
     .search-row {
       display: flex;
-      gap: 6px;
+      gap: 8px;
+      align-items: center;
     }
     .search-input-wrap {
       flex: 1;
@@ -265,21 +413,23 @@
     }
     .search-input {
       width: 100%;
-      background: #091322;
-      border: 1px solid #334155;
+      height: 38px;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 8px 32px 8px 12px;
       color: #fff;
+      padding: 0 36px 0 12px;
       font-size: 13px;
       outline: none;
+      transition: border-color 0.2s;
     }
     .search-input:focus {
-      border-color: #38bdf8;
+      border-color: var(--accent-blue);
     }
     .btn-clear {
       position: absolute;
-      right: 8px;
-      background: none;
+      right: 10px;
+      background: transparent;
       border: none;
       color: var(--text-muted);
       font-size: 14px;
@@ -287,87 +437,92 @@
       display: none;
     }
     .btn-search {
-      background: var(--accent-red);
-      color: #fff;
+      height: 38px;
+      padding: 0 16px;
+      background: var(--accent-blue);
       border: none;
       border-radius: 8px;
-      padding: 8px 16px;
+      color: white;
       font-weight: 700;
       font-size: 13px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
+      transition: background 0.2s;
       white-space: nowrap;
     }
-    .btn-search:active {
-      opacity: 0.85;
+    .btn-search:hover {
+      background: var(--accent-blue-hover);
     }
+
     .preset-pills {
       display: flex;
       gap: 6px;
       overflow-x: auto;
-      padding-bottom: 3px;
       scrollbar-width: none;
+      padding-bottom: 2px;
     }
     .preset-pills::-webkit-scrollbar {
       display: none;
     }
     .pill {
       background: #1e293b;
-      border: 1px solid var(--border-color);
       color: #cbd5e1;
-      padding: 6px 12px;
-      border-radius: 14px;
       font-size: 11px;
       font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
       white-space: nowrap;
       cursor: pointer;
-      transition: background 0.15s;
+      border: 1px solid #334155;
+      transition: all 0.2s;
     }
-    .pill:hover, .pill:active {
+    .pill:hover {
       background: #334155;
-      color: white;
+      color: #fff;
+      border-color: #64748b;
     }
 
-    /* CURRENT PLAYING BAR */
     .now-playing-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 5px 12px;
-      background: #0f172a;
+      padding: 4px 12px;
+      background: #020617;
       border-bottom: 1px solid #1e293b;
       font-size: 12px;
+      color: #94a3b8;
     }
     .now-playing-text {
-      color: #38bdf8;
-      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 75%;
+      color: #38bdf8;
+      font-weight: 600;
     }
     .btn-toggle-list {
-      background: #1e293b;
+      background: transparent;
       border: 1px solid #334155;
-      color: #f1f5f9;
-      padding: 3px 8px;
+      color: #cbd5e1;
+      padding: 2px 8px;
       border-radius: 4px;
       font-size: 11px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .btn-toggle-list:hover {
+      background: #1e293b;
     }
 
     .video-viewport {
       flex: 1;
       position: relative;
-      width: 100%;
-      height: 100%;
       background: #000;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     #yt-player {
       width: 100%;
@@ -376,144 +531,141 @@
     }
 
     /* SEARCH RESULTS DRAWER */
-    #search-results-drawer {
+    .results-drawer {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(10, 13, 20, 0.94);
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 15, 25, 0.96);
       backdrop-filter: blur(12px);
       z-index: 100;
       display: none;
       flex-direction: column;
-      overflow-y: auto;
-      padding: 12px;
-      gap: 8px;
+      overflow: hidden;
     }
-    .drawer-header {
+    .results-header {
+      padding: 10px 14px;
+      background: #0f172a;
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #334155;
-    }
-    .drawer-title {
       font-size: 13px;
       font-weight: 700;
-      color: #38bdf8;
     }
-    .btn-close-drawer {
-      background: #334155;
-      border: none;
-      color: #fff;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
+    .results-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
     .result-item {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      gap: 10px;
+      background: #1e293b;
       padding: 8px;
-      background: #121826;
-      border: 1px solid #1e293b;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.15s;
+      border: 1px solid transparent;
+      transition: all 0.15s;
     }
-    .result-item:hover, .result-item:active {
-      background: #1e293b;
-      border-color: #0284c7;
-    }
-    .result-thumb-wrap {
-      position: relative;
-      width: 90px;
-      height: 52px;
-      flex-shrink: 0;
-      border-radius: 5px;
-      overflow: hidden;
-      background: #000;
+    .result-item:hover {
+      background: #334155;
+      border-color: var(--accent-blue);
     }
     .result-thumb {
-      width: 100%;
-      height: 100%;
+      width: 80px;
+      height: 50px;
       object-fit: cover;
-    }
-    .result-duration {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      background: rgba(0,0,0,0.85);
-      color: #fff;
-      font-size: 9px;
-      padding: 1px 4px;
-      border-radius: 2px;
-      font-family: monospace;
+      border-radius: 4px;
+      background: #000;
+      flex-shrink: 0;
     }
     .result-info {
       flex: 1;
-      overflow: hidden;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      justify-content: center;
     }
-    .result-video-title {
+    .result-title {
       font-size: 12px;
       font-weight: 600;
       color: #f1f5f9;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-bottom: 3px;
     }
-    .result-channel {
-      font-size: 10px;
-      color: #94a3b8;
+    .result-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
     }
 
-    /* CAR PULSING GPS PIN */
+    /* CAR MARKER STYLES */
+    .custom-car-pin {
+      background: transparent;
+      border: none;
+    }
     .car-marker-container {
       position: relative;
       width: 32px;
       height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .car-marker-pulse {
       position: absolute;
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: rgba(2, 132, 199, 0.4);
-      animation: car-pulse 2s infinite ease-out;
+      background: rgba(37, 99, 235, 0.4);
+      animation: carPulse 2s infinite;
     }
     .car-marker-core {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      width: 20px;
-      height: 20px;
-      background: #0284c7;
-      border: 3px solid #ffffff;
+      position: relative;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(0,0,0,0.6);
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      z-index: 2;
     }
-    @keyframes car-pulse {
+    @keyframes carPulse {
       0% { transform: scale(0.6); opacity: 1; }
-      100% { transform: scale(1.8); opacity: 0; }
+      100% { transform: scale(1.6); opacity: 0; }
     }
 
-    .no-fullscreen-notice {
-      position: absolute;
-      bottom: 6px;
-      right: 8px;
-      background: rgba(0,0,0,0.75);
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      color: #10b981;
-      pointer-events: none;
+    /* TOAST */
+    .toast-msg {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent-blue);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 2000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      display: none;
+      animation: fadeInOut 2.5s forwards;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translate(-50%, 10px); }
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -10px); }
     }
   </style>
 </head>
@@ -533,6 +685,12 @@
           <span class="speed-val" id="hud-speed">0</span>
           <span class="speed-unit">KM/H</span>
         </div>
+        
+        <div class="gps-badge" id="hud-gps-badge" onclick="requestGpsPermission(true)" title="Bấm để quét lại GPS hoặc cấp quyền">
+          <span class="gps-dot" id="hud-gps-dot"></span>
+          <span class="gps-text" id="hud-gps-text">Dò GPS...</span>
+        </div>
+
         <div class="clock-badge" id="hud-clock">00:00:00</div>
       </div>
 
@@ -556,12 +714,32 @@
             <button class="btn-layer" id="btn-lyr-sat" onclick="switchTileLayer('satellite', this)">🛰️ Vệ Tinh</button>
           </div>
           <div class="map-action-btns">
+            <button class="btn-map-action" id="btn-gps-trigger" onclick="requestGpsPermission(true)">📍 Lấy Vị Trí</button>
             <button class="btn-map-action active" id="btn-follow" onclick="toggleAutoFollow()">🚗 Đang Khóa Xe</button>
-            <button class="btn-map-action" onclick="centerVehicle()">📍 Về Vị Trí</button>
+            <button class="btn-map-action" onclick="centerVehicle()">🎯 Về Vị Trí</button>
+          </div>
+        </div>
+
+        <!-- GPS ALERT BANNER -->
+        <div id="gps-alert-banner" class="gps-alert-bar" style="display:none;">
+          <span class="gps-alert-icon">⚠️</span>
+          <div class="gps-alert-content">
+            <div class="gps-alert-title" id="gps-alert-title">Trình duyệt chưa bật quyền Vị trí (GPS)</div>
+            <div class="gps-alert-desc" id="gps-alert-desc">Để xem đúng vị trí xe đang chạy, hãy bấm biểu tượng <b>ổ khóa 🔒</b> trên thanh địa chỉ URL và chọn <b>Vị trí: Cho phép (Allow)</b>.</div>
+          </div>
+          <div class="gps-alert-actions">
+            <button class="btn-gps-alert-action" onclick="requestGpsPermission(true)">Cấp Quyền / Thử Lại</button>
+            <button class="btn-gps-alert-dismiss" onclick="hideGpsAlert()">✕</button>
           </div>
         </div>
 
         <div id="leaflet-map"></div>
+
+        <!-- MAP QUICK SEARCH FLOAT -->
+        <div class="map-search-float">
+          <input type="text" id="map-search-input" placeholder="🔍 Đến địa điểm (VD: Bãi Cháy)..." onkeydown="if(event.key==='Enter') searchMapPlace()">
+          <button class="btn-map-search-go" onclick="searchMapPlace()">Tìm</button>
+        </div>
 
         <div class="map-floating-zoom">
           <button class="btn-zoom" onclick="mapZoomIn()">+</button>
@@ -598,29 +776,30 @@
         <div class="video-viewport">
           <iframe id="yt-player" 
                   src="https://www.youtube-nocookie.com/embed/BiXCp2YlY7E?autoplay=1&playsinline=1&enablejsapi=1" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowfullscreen="false">
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen" 
+                  allowfullscreen>
           </iframe>
-          <div class="no-fullscreen-notice">🛡️ Chống khóa hình khi xe lăn bánh</div>
 
-          <!-- DRAWER KẾT QUẢ TÌM KIẾM -->
-          <div id="search-results-drawer">
-            <div class="drawer-header">
-              <span class="drawer-title" id="drawer-heading">DANH SÁCH BÀI HÁT TÌM THẤY</span>
-              <button class="btn-close-drawer" onclick="toggleResultsDrawer(false)">✕ Đóng lại xem video</button>
+          <!-- RESULTS DRAWER -->
+          <div class="results-drawer" id="results-drawer">
+            <div class="results-header">
+              <span id="results-header-title">Kết quả tìm kiếm</span>
+              <button class="btn-toggle-list" onclick="toggleResultsDrawer()">Đóng ✕</button>
             </div>
-            <div id="search-results-list" style="display:flex; flex-direction:column; gap:8px;">
-              <!-- Dynamic Cards -->
-            </div>
+            <div class="results-list" id="results-list-box"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="./leaflet.js"></script>
+  <div id="toast" class="toast-msg"></div>
+
+  <!-- Leaflet Core JS -->
+  <script src="leaflet.js"></script>
+
   <script>
-    // 1. CLOCK
+    // 1. HUD CLOCK
     function updateClock() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -660,11 +839,25 @@
       }, 250);
     }
 
-    // 3. MAP CONFIGURATION & GOOGLE MAPS DIRECT TILES (ZERO API KEY)
+    // 3. MAP CONFIGURATION & MULTI-TIER GEOLOCATION
     let map, carMarker;
-    let currentLat = 21.0285, currentLng = 105.8542; // Mặc định Hà Nội
+    let currentLat = 21.0285, currentLng = 105.8542; // Tọa độ ban đầu (dự phòng)
     let autoFollow = true;
     let currentTileLayer;
+    let hasRealGps = false;
+    let gpsWatchId = null;
+
+    // Phục hồi tọa độ đã lưu từ phiên trước nếu có
+    try {
+      const saved = localStorage.getItem('car_split_last_pos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.lat && parsed.lng) {
+          currentLat = parsed.lat;
+          currentLng = parsed.lng;
+        }
+      }
+    } catch (e) {}
 
     const MAP_LAYERS = {
       traffic: L.tileLayer('https://mt{s}.google.com/vt/lyrs=m,traffic|seconds_into_week:-1&x={x}&y={y}&z={z}', {
@@ -685,7 +878,7 @@
       map = L.map('leaflet-map', {
         zoomControl: false,
         attributionControl: false
-      }).setView([currentLat, currentLng], 16);
+      }).setView([currentLat, currentLng], 15);
 
       // Mặc định nạp Google Maps Live Traffic
       currentTileLayer = MAP_LAYERS.traffic.addTo(map);
@@ -705,29 +898,186 @@
 
       carMarker = L.marker([currentLat, currentLng], { icon: carIcon }).addTo(map);
 
-      // Theo dõi vị trí GPS xe thực tế
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(
-          pos => {
-            currentLat = pos.coords.latitude;
-            currentLng = pos.coords.longitude;
-            const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
-            document.getElementById('hud-speed').textContent = speedKmh;
+      // Cho phép người dùng chạm đúp / double click trên bản đồ để ghim xe thủ công khi test
+      map.on('dblclick', function(e) {
+        updateCarPosition(e.latlng.lat, e.latlng.lng, 0, 'manual');
+        showToast('📍 Đã ghim vị trí xe thủ công: ' + e.latlng.lat.toFixed(4) + ', ' + e.latlng.lng.toFixed(4));
+      });
 
-            carMarker.setLatLng([currentLat, currentLng]);
-
-            if (autoFollow) {
-              map.panTo([currentLat, currentLng], { animate: true, duration: 0.5 });
-            }
-          },
-          err => {
-            console.log('GPS Signal pending:', err);
-          },
-          { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-        );
-      }
+      // Khởi động lấy vị trí đa tầng (GPS -> Wi-Fi -> IP)
+      requestGpsPermission(false);
     }
     initMap();
+
+    function setGpsStatus(status, text, dotClass) {
+      const textEl = document.getElementById('hud-gps-text');
+      const dotEl = document.getElementById('hud-gps-dot');
+      if (textEl) textEl.textContent = text;
+      if (dotEl) {
+        dotEl.className = 'gps-dot ' + (dotClass || '');
+      }
+    }
+
+    function showGpsAlert(title, desc) {
+      const banner = document.getElementById('gps-alert-banner');
+      const t = document.getElementById('gps-alert-title');
+      const d = document.getElementById('gps-alert-desc');
+      if (banner && t && d) {
+        if (title) t.textContent = title;
+        if (desc) d.innerHTML = desc;
+        banner.style.display = 'flex';
+      }
+    }
+
+    function hideGpsAlert() {
+      const banner = document.getElementById('gps-alert-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    function updateCarPosition(lat, lng, speedKmh = 0, source = 'gps') {
+      currentLat = lat;
+      currentLng = lng;
+      if (carMarker) carMarker.setLatLng([currentLat, currentLng]);
+      if (speedKmh !== null) {
+        document.getElementById('hud-speed').textContent = speedKmh;
+      }
+      if (autoFollow && map) {
+        map.panTo([currentLat, currentLng], { animate: true, duration: 0.5 });
+      }
+      try {
+        localStorage.setItem('car_split_last_pos', JSON.stringify({ lat, lng, time: Date.now() }));
+      } catch (e) {}
+    }
+
+    // Tự động fallback sang định vị mạng IP nếu GPS chưa bắt được
+    function fetchIpLocationFallback() {
+      if (hasRealGps) return;
+      fetch('https://ipwho.is/')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success && !hasRealGps) {
+            const locName = data.city || data.region || 'Vị trí mạng';
+            setGpsStatus('ip', '🌐 ' + locName, '');
+            updateCarPosition(data.latitude, data.longitude, 0, 'ip');
+            if (map) map.setView([data.latitude, data.longitude], 14, { animate: true });
+          }
+        })
+        .catch(() => {
+          fetch('https://freeipapi.com/api/json')
+            .then(r => r.json())
+            .then(d => {
+              if (d && d.latitude && !hasRealGps) {
+                const name = d.cityName || d.regionName || 'Vị trí mạng';
+                setGpsStatus('ip', '🌐 ' + name, '');
+                updateCarPosition(d.latitude, d.longitude, 0, 'ip');
+                if (map) map.setView([d.latitude, d.longitude], 14, { animate: true });
+              }
+            })
+            .catch(() => {});
+        });
+    }
+
+    function requestGpsPermission(isUserAction = false) {
+      if (!navigator.geolocation) {
+        setGpsStatus('error', 'Không hỗ trợ GPS', 'error');
+        showGpsAlert('Thiết bị không hỗ trợ GPS', 'Trình duyệt này không có mô-đun Geolocation.');
+        fetchIpLocationFallback();
+        return;
+      }
+
+      setGpsStatus('searching', 'Đang quét GPS...', '');
+
+      // Bước 1: Thử GPS vệ tinh độ chính xác cao (Hardware GNSS)
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          hasRealGps = true;
+          hideGpsAlert();
+          const acc = Math.round(pos.coords.accuracy || 10);
+          setGpsStatus('active', `GPS Chuẩn (±${acc}m)`, 'active');
+          const speed = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+          updateCarPosition(pos.coords.latitude, pos.coords.longitude, speed, 'gps');
+          if (map) map.setView([pos.coords.latitude, pos.coords.longitude], 16, { animate: true });
+          startGpsWatch();
+          if (isUserAction) showToast('✅ Đã nhận tín hiệu GPS vệ tinh!');
+        },
+        err => {
+          console.warn('High accuracy GPS error:', err);
+          // Bước 2: Thử chế độ thường (Wi-Fi/Cell positioning của Windows hoặc Android)
+          navigator.geolocation.getCurrentPosition(
+            pos2 => {
+              hasRealGps = true;
+              hideGpsAlert();
+              setGpsStatus('active', 'GPS Mạng (Wi-Fi)', 'active');
+              const speed = pos2.coords.speed ? Math.round(pos2.coords.speed * 3.6) : 0;
+              updateCarPosition(pos2.coords.latitude, pos2.coords.longitude, speed, 'network');
+              if (map) map.setView([pos2.coords.latitude, pos2.coords.longitude], 15, { animate: true });
+              startGpsWatch();
+              if (isUserAction) showToast('✅ Đã cập nhật vị trí qua Wi-Fi!');
+            },
+            err2 => {
+              console.error('GPS fallback error:', err2);
+              if (err2.code === 1) { // PERMISSION_DENIED
+                setGpsStatus('denied', 'Bị chặn quyền GPS', 'error');
+                showGpsAlert(
+                  'Trình duyệt đang chặn quyền Vị trí (GPS)',
+                  'Để xe định vị đúng vị trí, hãy bấm biểu tượng <b>ổ khóa 🔒</b> ở góc trái thanh địa chỉ URL → chọn <b>Vị trí: Cho phép (Allow)</b> rồi bấm nút "Cấp Quyền / Thử Lại".'
+                );
+              } else if (err2.code === 2) { // POSITION_UNAVAILABLE
+                setGpsStatus('unavailable', 'Chưa có sóng GPS', '');
+                showGpsAlert('Chưa có sóng GPS', 'Thiết bị đang bị che khuất hoặc chưa kích hoạt GPS. Đang chuyển sang vị trí mạng IP.');
+              } else { // TIMEOUT
+                setGpsStatus('timeout', 'Hết giờ dò GPS', '');
+              }
+              // Bước 3: Tự động lấy vị trí theo IP mạng Internet để không bị đứng ở Hà Nội
+              fetchIpLocationFallback();
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 10000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 3000 }
+      );
+    }
+
+    function startGpsWatch() {
+      if (gpsWatchId !== null || !navigator.geolocation) return;
+      gpsWatchId = navigator.geolocation.watchPosition(
+        pos => {
+          hasRealGps = true;
+          const acc = Math.round(pos.coords.accuracy || 10);
+          setGpsStatus('active', `GPS Chuẩn (±${acc}m)`, 'active');
+          const speed = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0;
+          updateCarPosition(pos.coords.latitude, pos.coords.longitude, speed, 'gps');
+        },
+        err => {
+          console.warn('watchPosition warning:', err);
+        },
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+      );
+    }
+
+    // Tìm kiếm địa điểm trực tiếp trên bản đồ (VD: Bãi Cháy, Hạ Long, Hà Nội)
+    function searchMapPlace() {
+      const q = document.getElementById('map-search-input').value.trim();
+      if (!q) return;
+      showToast('🔍 Đang tìm: ' + q + '...');
+      fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.features && data.features.length > 0) {
+            const f = data.features[0];
+            const [lng, lat] = f.geometry.coordinates;
+            const placeName = f.properties.name || q;
+            updateCarPosition(lat, lng, 0, 'search');
+            if (map) map.setView([lat, lng], 15, { animate: true });
+            showToast('📍 Đã đến: ' + placeName);
+          } else {
+            showToast('Không tìm thấy địa điểm: ' + q);
+          }
+        })
+        .catch(err => {
+          showToast('Lỗi kết nối tìm kiếm địa điểm');
+        });
+    }
 
     function switchTileLayer(type, btn) {
       document.querySelectorAll('.btn-layer').forEach(b => b.classList.remove('active'));
@@ -756,6 +1106,9 @@
       if (map) {
         map.setView([currentLat, currentLng], 16, { animate: true });
       }
+      if (!hasRealGps) {
+        requestGpsPermission(true);
+      }
     }
 
     function mapZoomIn() {
@@ -778,172 +1131,175 @@
         { id: 'fKwC3bH0oSo', title: 'NHẠC REMIX TIKTOK TRIỆU VIEW - BXH Nhạc Trẻ', uploader: 'VinaHey EDM', duration: '58:20' }
       ],
       bolero: [
-        { id: 'HzVgG6qulSM', title: '50 Ca Khúc Bolero Tuyển Chọn Nghe Lãng Đãng Lái Xe', uploader: 'Bolero Xưa', duration: '2:15:30' },
-        { id: 's26h22t8sRk', title: 'Tuyệt Đỉnh Bolero Trữ Tình Quê Hương Lôi Cuốn', uploader: 'Làng Nhạc Bolero', duration: '1:45:10' }
+        { id: 'HzVgG6qulSM', title: 'TUYỂN CHỌN BOLERO TRỮ TÌNH QUÊ HƯƠNG HAY NHẤT', uploader: 'Bolero Xưa', duration: '1:45:10' },
+        { id: 'Q_UjO0Bsq9k', title: 'TUYỆT PHẨM BOLERO LÁI XE ĐƯỜNG DÀI KHÔNG BUỒN NGỦ', uploader: 'Âm Nhạc Việt', duration: '2:10:00' }
+      ],
+      news: [
+        { id: '6QjFMF4Np_g', title: 'BẢN TIN THỜI SỰ VTV24 - CẬP NHẬT 24/7', uploader: 'VTV24 Official', duration: 'Trực tiếp' }
       ],
       lofi: [
-        { id: '_Ic6IkztKLI', title: 'PLAYLIST DEEP CHILL ĐƯỜNG MỘT CHILL - Nhạc Lái Xe', uploader: 'Lofi Chill Lái Xe', duration: '1:30:15' }
-      ],
-      vtv24: [
-        { id: '6QjFMF4Np_g', title: 'Tin Tức Mới Nhất - Thời Sự VTV24 Hôm Nay', uploader: 'VTV24', duration: '45:10' }
+        { id: '_Ic6IkztKLI', title: 'LOFI CHILL VIỆT NAM THƯ GIÃN KHI LÁI XE ĐÊM', uploader: 'Lofi Chill', duration: '1:30:15' }
       ],
       podcast: [
-        { id: '86vQ7kHWvZQ', title: 'FULL SÁCH NÓI: BIẾN MỌI THỨ THÀNH TIỀN | Tư Duy Làm Giàu', uploader: 'Sách Nói Audio', duration: '3:20:00' }
+        { id: '86vQ7kHWvZQ', title: 'SÁCH NÓI: ĐẮC NHÂN TÂM & TƯ DUY LÀM GIÀU', uploader: 'Sách Tóm Tắt', duration: '45:30' }
       ]
     };
 
-    function extractVideoId(url) {
-      if (!url) return null;
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    function formatSecs(secs) {
-      if (!secs || isNaN(secs)) return '';
-      const m = Math.floor(secs / 60);
-      const s = Math.floor(secs % 60);
-      return `${m}:${String(s).padStart(2, '0')}`;
-    }
-
     function onSearchInput(input) {
       const clearBtn = document.getElementById('btn-clear-input');
-      clearBtn.style.display = input.value.trim().length > 0 ? 'block' : 'none';
+      clearBtn.style.display = input.value.length > 0 ? 'block' : 'none';
     }
 
     function clearSearchInput() {
       const input = document.getElementById('video-input');
       input.value = '';
-      document.getElementById('btn-clear-input').style.display = 'none';
       input.focus();
+      document.getElementById('btn-clear-input').style.display = 'none';
     }
 
-    function playPreset(id, title) {
-      playVideo(id, title);
+    function extractYouTubeId(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
     }
 
     function playVideo(id, title) {
-      const player = document.getElementById('yt-player');
-      player.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&enablejsapi=1`;
-      document.getElementById('now-playing-title').textContent = `▶ Đang phát: ${title || 'YouTube Video'}`;
+      const iframe = document.getElementById('yt-player');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&enablejsapi=1`;
+      document.getElementById('now-playing-title').textContent = `▶ Đang phát: ${title || id}`;
+      
+      const drawer = document.getElementById('results-drawer');
+      drawer.style.display = 'none';
+
+      showToast(`🎵 Đang phát: ${title || id}`);
+    }
+
+    function playPreset(id, title) {
+      document.getElementById('video-input').value = title;
+      onSearchInput(document.getElementById('video-input'));
+      playVideo(id, title);
     }
 
     async function triggerSearch() {
-      const input = document.getElementById('video-input').value.trim();
-      if (!input) return;
+      const query = document.getElementById('video-input').value.trim();
+      if (!query) return;
 
-      // 1. Kiểm tra nếu là link YouTube trực tiếp
-      const directId = extractVideoId(input);
+      const directId = extractYouTubeId(query);
       if (directId) {
-        playVideo(directId, 'Video Trực Tiếp');
+        playVideo(directId, 'Video trực tiếp từ URL');
         return;
       }
 
-      // 2. Tìm kiếm qua Piped API
-      const searchBtn = document.getElementById('btn-search-main');
-      searchBtn.innerHTML = '⏳ Đang tìm...';
-      searchBtn.disabled = true;
+      showToast('🔍 Đang tìm kiếm bài hát...');
+      document.getElementById('btn-search-main').textContent = '⏳';
 
-      let results = [];
+      let items = [];
 
-      for (const baseUrl of PIPED_APIS) {
+      for (const api of PIPED_APIS) {
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 4000);
-          const res = await fetch(`${baseUrl}/search?q=${encodeURIComponent(input)}&filter=videos`, {
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          
+          const res = await fetch(`${api}/search?q=${encodeURIComponent(query)}&filter=videos`, {
             signal: controller.signal
           });
-          clearTimeout(timer);
+          clearTimeout(timeoutId);
 
           if (res.ok) {
             const data = await res.json();
             if (data.items && data.items.length > 0) {
-              results = data.items.slice(0, 12).map(item => ({
-                id: item.url.replace('/watch?v=', ''),
-                title: item.title,
-                uploader: item.uploaderName || '',
-                thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${item.url.replace('/watch?v=', '')}/mqdefault.jpg`,
-                duration: formatSecs(item.duration)
-              }));
+              items = data.items
+                .filter(item => item.type === 'stream')
+                .map(item => ({
+                  id: item.url.replace('/watch?v=', ''),
+                  title: item.title,
+                  uploader: item.uploaderName || 'YouTube',
+                  duration: item.duration ? formatDuration(item.duration) : '--:--',
+                  thumbnail: item.thumbnail
+                }));
               break;
             }
           }
-        } catch (err) {
-          console.warn('API error from', baseUrl, err);
+        } catch (e) {
+          console.warn(`Piped API ${api} failed:`, e);
         }
       }
 
-      // Fallback nếu API ngoài bị chậm
-      if (results.length === 0) {
-        const lower = input.toLowerCase();
-        let fallbackKey = 'remix';
-        if (lower.includes('bolero') || lower.includes('vang') || lower.includes('tru tinh')) fallbackKey = 'bolero';
-        else if (lower.includes('lofi') || lower.includes('chill')) fallbackKey = 'lofi';
-        else if (lower.includes('vtv') || lower.includes('tin') || lower.includes('su')) fallbackKey = 'vtv24';
-        else if (lower.includes('sach') || lower.includes('podcast')) fallbackKey = 'podcast';
-
-        results = (BACKUP_CATALOG[fallbackKey] || BACKUP_CATALOG.remix).map(v => ({
-          ...v,
-          thumbnail: `https://i.ytimg.com/vi/${v.id}/mqdefault.jpg`
-        }));
+      if (items.length === 0) {
+        items = getFallbackResults(query);
       }
 
-      searchBtn.innerHTML = '🔍 Tìm';
-      searchBtn.disabled = false;
+      document.getElementById('btn-search-main').textContent = '🔍 Tìm';
+      renderSearchResults(items, query);
+    }
 
-      renderSearchResults(results, input);
+    function getFallbackResults(query) {
+      const q = query.toLowerCase();
+      if (q.includes('bolero') || q.includes('trữ tình')) return BACKUP_CATALOG.bolero;
+      if (q.includes('lofi') || q.includes('chill')) return BACKUP_CATALOG.lofi;
+      if (q.includes('tin') || q.includes('thời sự') || q.includes('vtv')) return BACKUP_CATALOG.news;
+      if (q.includes('sách') || q.includes('podcast')) return BACKUP_CATALOG.podcast;
+      return BACKUP_CATALOG.remix;
+    }
+
+    function formatDuration(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}:${String(s).padStart(2, '0')}`;
     }
 
     function renderSearchResults(items, query) {
-      const drawer = document.getElementById('search-results-drawer');
-      const listEl = document.getElementById('search-results-list');
-      const heading = document.getElementById('drawer-heading');
+      const listBox = document.getElementById('results-list-box');
+      const drawer = document.getElementById('results-drawer');
       const countEl = document.getElementById('results-count');
+      const titleEl = document.getElementById('results-header-title');
 
-      listEl.innerHTML = '';
+      listBox.innerHTML = '';
       countEl.textContent = items.length;
-      heading.textContent = `KẾT QUẢ CHO: "${query.toUpperCase()}" (${items.length} BÀI)`;
+      titleEl.textContent = `Kết quả cho: "${query}" (${items.length} bài)`;
 
-      if (items.length > 0) {
-        // Tự động phát ngay bài đầu tiên
-        playVideo(items[0].id, items[0].title);
-
-        items.forEach((item, idx) => {
+      if (items.length === 0) {
+        listBox.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8">Không tìm thấy bài hát phù hợp</div>';
+      } else {
+        items.forEach((item, index) => {
           const div = document.createElement('div');
           div.className = 'result-item';
-          div.onclick = () => {
-            playVideo(item.id, item.title);
-            toggleResultsDrawer(false); // Đóng drawer để xem video
-          };
-
+          const thumb = item.thumbnail || `https://i.ytimg.com/vi/${item.id}/hqdefault.jpg`;
+          
           div.innerHTML = `
-            <div class="result-thumb-wrap">
-              <img class="result-thumb" src="${item.thumbnail}" onerror="this.src='https://i.ytimg.com/vi/${item.id}/mqdefault.jpg'" alt="">
-              <span class="result-duration">${item.duration || 'Video'}</span>
-            </div>
+            <img class="result-thumb" src="${thumb}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=120&auto=format&fit=crop&q=60'">
             <div class="result-info">
-              <div class="result-video-title">${idx + 1}. ${item.title}</div>
-              <div class="result-channel">👤 ${item.uploader || 'YouTube'}</div>
+              <div class="result-title">${item.title}</div>
+              <div class="result-meta">
+                <span>👤 ${item.uploader}</span>
+                <span>⏱️ ${item.duration}</span>
+              </div>
             </div>
           `;
-          listEl.appendChild(div);
+          div.onclick = () => playVideo(item.id, item.title);
+          listBox.appendChild(div);
         });
 
-        // Mở drawer kết quả
-        drawer.style.display = 'flex';
-      } else {
-        listEl.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:20px;">Không tìm thấy bài hát. Thử từ khóa khác!</div>';
-        drawer.style.display = 'flex';
+        if (items.length > 0) {
+          playVideo(items[0].id, items[0].title);
+        }
       }
+
+      drawer.style.display = 'flex';
     }
 
-    function toggleResultsDrawer(force) {
-      const drawer = document.getElementById('search-results-drawer');
-      if (typeof force === 'boolean') {
-        drawer.style.display = force ? 'flex' : 'none';
-      } else {
-        drawer.style.display = drawer.style.display === 'flex' ? 'none' : 'flex';
-      }
+    function toggleResultsDrawer() {
+      const drawer = document.getElementById('results-drawer');
+      drawer.style.display = drawer.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 2500);
     }
   </script>
 </body>
