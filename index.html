@@ -733,6 +733,16 @@
           </div>
         </div>
 
+        
+        <!-- QUICK LOCATION PRESETS CHIPS -->
+        <div class="map-quick-locations">
+          <span class="loc-chip active" onclick="setQuickLoc(20.9575, 107.0345, 'Bãi Cháy', this)">🏖️ Bãi Cháy</span>
+          <span class="loc-chip" onclick="setQuickLoc(20.9563, 107.0763, 'Hạ Long', this)">🌊 Hạ Long</span>
+          <span class="loc-chip" onclick="setQuickLoc(20.9540, 107.0800, 'Hòn Gai', this)">🏢 Hòn Gai</span>
+          <span class="loc-chip" onclick="setQuickLoc(20.9295, 106.9856, 'Tuần Châu', this)">⛵ Tuần Châu</span>
+          <span class="loc-chip" onclick="setQuickLoc(21.0285, 105.8542, 'Hà Nội', this)">🏙️ Hà Nội</span>
+        </div>
+
         <div id="leaflet-map"></div>
 
         <!-- MAP QUICK SEARCH FLOAT -->
@@ -841,7 +851,7 @@
 
     // 3. MAP CONFIGURATION & MULTI-TIER GEOLOCATION
     let map, carMarker;
-    let currentLat = 21.0285, currentLng = 105.8542; // Tọa độ ban đầu (dự phòng)
+    let currentLat = 20.9575, currentLng = 107.0345; // Mặc định Bãi Cháy, Quảng Ninh
     let autoFollow = true;
     let currentTileLayer;
     let hasRealGps = false;
@@ -1056,6 +1066,15 @@
     }
 
     // Tìm kiếm địa điểm trực tiếp trên bản đồ (VD: Bãi Cháy, Hạ Long, Hà Nội)
+    
+    function setQuickLoc(lat, lng, name, btn) {
+      document.querySelectorAll('.loc-chip').forEach(c => c.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updateCarPosition(lat, lng, 0, 'preset');
+      if (map) map.setView([lat, lng], 16, { animate: true });
+      showToast('📍 Đã định vị về: ' + name);
+    }
+
     function searchMapPlace() {
       const q = document.getElementById('map-search-input').value.trim();
       if (!q) return;
